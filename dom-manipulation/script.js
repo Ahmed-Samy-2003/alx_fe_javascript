@@ -10,17 +10,22 @@ let quotes = [
 function showRandomQuote() {  
     const quoteDisplay = document.getElementById("quoteDisplay");  
     // Clear existing content before adding the new quote  
-    quoteDisplay.textContent = ""; // Ensure it's empty for new quote  
+    while (quoteDisplay.firstChild) {  
+        quoteDisplay.removeChild(quoteDisplay.firstChild);  
+    }  
+    
     const randomIndex = Math.floor(Math.random() * quotes.length);  
     
-    // Create text nodes for quote and category  
-    const quoteText = document.createTextNode(`"${quotes[randomIndex].text}"`);  
-    const quoteCategory = document.createElement("span");  
-    quoteCategory.textContent = ` - ${quotes[randomIndex].category}`;  
+    // Create a new text node for the quote  
+    const quoteTextNode = document.createTextNode(`"${quotes[randomIndex].text}"`);  
     
-    // Append the text nodes to the quoteDisplay div  
-    quoteDisplay.appendChild(quoteText);  
-    quoteDisplay.appendChild(quoteCategory);  
+    // Create a span element for the category  
+    const quoteCategorySpan = document.createElement("span");  
+    quoteCategorySpan.textContent = ` - ${quotes[randomIndex].category}`;  
+    
+    // Append the quote text and category to the display div  
+    quoteDisplay.appendChild(quoteTextNode);  
+    quoteDisplay.appendChild(quoteCategorySpan);  
 }  
 
 // Function to add a new quote  
