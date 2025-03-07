@@ -693,3 +693,158 @@ async function addQuoteToServer(quote) {
 function notifyUserOfUpdates() {  
     alert("Your quotes have been updated from the server.");  
 }  
+const SERVER_URL = "https://jsonplaceholder.typicode.com/posts"; // Placeholder API for quotes  
+let quotes = JSON.parse(localStorage.getItem("quotes")) || [];  
+
+// Run on page load  
+window.onload = async function() {  
+    await fetchQuotesFromServer(); // Initial fetch  
+    createAddQuoteForm(); // Create the form for adding new quotes  
+    populateCategories(); // Populate categories after fetching  
+    displayQuotes(quotes); // Display initial quotes  
+    setInterval(fetchQuotesFromServer, 5000); // Refresh data every 5 seconds  
+};  
+
+// Fetch quotes from the server  
+async function fetchQuotesFromServer() {  
+    try {  
+        const response = await fetch(SERVER_URL);  
+        const fetchedQuotes = await response.json();  
+        syncQuotes(fetchedQuotes); // Sync with local data  
+        alert("Quotes synced with server!"); // Notify user of successful sync  
+    } catch (error) {  
+        console.error("Error fetching data from server:", error);  
+    }  
+}  
+
+// Sync quotes between local storage and server  
+function syncQuotes(fetchedQuotes) {  
+    const localQuoteMap = Object.fromEntries(quotes.map(quote => [quote.id, quote])); // Map local quotes by ID  
+
+    fetchedQuotes.forEach(serverQuote => {  
+        if (!localQuoteMap[serverQuote.id]) {  
+            // If the server quote does not exist locally, add it  
+            quotes.push(serverQuote);   
+        } else {  
+            // If it exists, resolve conflicts  
+            const localQuote = localQuoteMap[serverQuote.id];  
+            const resolvedQuote = resolveConflict(localQuote, serverQuote);  
+            const index = quotes.findIndex(q => q.id === resolvedQuote.id);  
+            quotes[index] = resolvedQuote; // Update local quotes with the resolved one  
+        }  
+    });  
+
+    localStorage.setItem("quotes", JSON.stringify(quotes)); // Update local storage  
+    displayQuotes(quotes); // Reflect the updated quotes in the UI  
+}  
+
+// Basic conflict resolution function  
+function resolveConflict(localQuote, serverQuote) {  
+    // Logic to determine which quote to retain (here, we simply prefer server data)  
+    return serverQuote;   
+}  
+
+// Create form to add new quotes  
+function createAddQuoteForm() {  
+    const formContainer = document.getElementById("addQuoteContainer"); // You'll need a corresponding HTML element  
+    const form = document.createElement("form");  
+    form.id = "addQuoteForm";  
+
+    const textInput = document.createElement("input");  
+    textInput.type = "text";  
+    textInput.placeholder = "Enter your quote here...";  
+    textInput.required = true;  
+
+    const categoryInput = document.createElement("input");  
+    categoryInput.type = "text";  
+    categoryInput.placeholder = "Enter category (e.g., motivation)";  
+    categoryInput.required = true;  
+
+    const submitButton = document.createElement("button");  
+    submitButton.type = "submit";  
+    submitButton.innerText = "Add Quote";  
+
+    // Append inputs to the form  
+    form.appendChild(textInput);  
+    form.appendChild(categoryInput);  
+    form.appendChild(submitButton);  
+
+    // Event listener to handle form submission  
+    form.addEventListener("submit", function(event) {  
+        event.preventDefault(); // Prevent default form submission behavior  
+        addQuote(textInput.value, categoryInput.value); // Call addQuote function  
+        form.reset(); // Reset the form fields  
+    });  
+
+    formContainer.appendChild(form); // Append the form to the container element  
+}  
+
+// Populate categories dynamically  
+function populateCategories() {  
+    const categories = new Set(quotes.map(quote => quote.category));  
+    const categoryFilter = document.getElementById("categoryFilter");  
+    categoryFilter.innerHTML = '<option value="all">All Categories</option>'; // Clear previous options  
+
+    categories.forEach(category => {  
+        const option = document.createElement("option");  
+        option.value = category;  
+        option.textContent = category.charAt(0).toUpperCase() + category.slice(1);  
+        categoryFilter.appendChild(option);  
+    });  
+
+    // Restore last selected category  
+    const lastSelectedCategory = localStorage.getItem("selectedCategory") || "all";  
+    categoryFilter.value = lastSelectedCategory;  
+}  
+
+// Display quotes in the UI  
+function displayQuotes(quotesToDisplay) {  
+    const quoteContainer = document.getElementById("quoteContainer");  
+    quoteContainer.innerHTML = ""; // Clear existing quotes  
+
+    quotesToDisplay.forEach(quote => {  
+        const quoteElement = document.createElement("div");  
+        quoteElement.innerHTML = `<strong>${quote.title || quote.text}</strong>`; // Assuming the title is the primary content  
+        quoteContainer.appendChild(quoteElement);  
+    });  
+}  
+
+// Add a new quote  
+async function addQuote(text, category) {  
+    const newQuote = {  
+        title: text, // Assuming the title format  
+        body: "Your quote message here.", // Placeholder for your content  
+        category: category || "general",  
+        id: quotes.length + 1, // ID generation for the local dataset  
+    };  
+
+    // Add to local storage first  
+    quotes.push(newQuote);  
+    localStorage.setItem("quotes", JSON.stringify(quotes));  
+    
+    // Optionally, post to the server  
+    await addQuoteToServer(newQuote); // Send new quote to the server  
+    displayQuotes(quotes); // Refresh displayed quotes after adding  
+}  
+
+// Function to add quote to server  
+async function addQuoteToServer(quote) {  
+    try {  
+        const response = await fetch(SERVER_URL, {  
+            method: "POST",  
+            headers: {  
+                "Content-Type": "application/json",  
+            },  
+            body: JSON.stringify(quote),  
+        });  
+        const data = await response.json();  
+        console.log("Quote added to server:", data);  
+    } catch (error) {  
+        console.error("Error posting data to server:", error);  
+    }  
+}  
+
+// Notify users when quotes are fetched  
+function notifyUserOfUpdates() {  
+    alert("Your quotes have been updated from the server.");  
+}  
