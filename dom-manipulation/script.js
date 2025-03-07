@@ -103,3 +103,50 @@ document.getElementById("importFile").addEventListener("change", importFromJsonF
 
 // Load quotes on initialization  
 loadQuotes();  
+const quotes = [  
+    { text: "Quote 1", category: "inspiration" },  
+    { text: "Quote 2", category: "life" },  
+    { text: "Quote 3", category: "inspiration" },  
+    { text: "Quote 4", category: "humor" },  
+    // More quotes...  
+];  
+
+function populateCategories() {  
+    const categories = new Set(quotes.map(quote => quote.category));  
+    const categoryFilter = document.getElementById("categoryFilter");  
+
+    categories.forEach(category => {  
+        const option = document.createElement("option");  
+        option.value = category;  
+        option.textContent = category.charAt(0).toUpperCase() + category.slice(1);  
+        categoryFilter.appendChild(option);  
+    });  
+}  
+function filterQuotes() {  
+    const selectedCategory = document.getElementById("categoryFilter").value;  
+    const filteredQuotes = selectedCategory === "all" ? quotes : quotes.filter(quote => quote.category === selectedCategory);  
+    displayQuotes(filteredQuotes);  
+    localStorage.setItem("selectedCategory", selectedCategory); // Store the selected category  
+}  
+
+function displayQuotes(quotesToDisplay) {  
+    const quoteContainer = document.getElementById("quoteContainer");  
+    quoteContainer.innerHTML = ""; // Clear previous quotes  
+
+    quotesToDisplay.forEach(quote => {  
+        const quoteElement = document.createElement("div");  
+        quoteElement.textContent = quote.text;  
+        quoteContainer.appendChild(quoteElement);  
+    });  
+}  
+window.onload = function() {  
+    populateCategories();  
+    const lastSelectedCategory = localStorage.getItem("selectedCategory") || "all";  
+    document.getElementById("categoryFilter").value = lastSelectedCategory;  
+    filterQuotes(); // Display quotes based on the last selected category  
+};  
+function addQuote(text, category) {  
+    quotes.push({ text, category });  
+    populateCategories(); // Update the category dropdown  
+    filterQuotes(); // Refresh displayed quotes  
+}  
